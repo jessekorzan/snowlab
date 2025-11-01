@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big White Snow Report</title>
+    <meta name="description" content="Get the ultimate Big White snow report with live conditions, webcams, hour-by-hour forecast, and insider mountain insights tailored for skiers and riders.">
+    <meta name="keywords" content="Big White, snow report, ski conditions, powder forecast, Big White webcams, Big White weather, ski resort dashboard">
+    <meta name="author" content="emptycan.com">
+    <link rel="canonical" href="https://bw-report.netlify.app/">
+    <meta property="og:title" content="Big White Snow Report — Live Conditions & Forecast">
+    <meta property="og:description" content="Track current temps, fresh snow, wind, webcams, and the next 7 days at Big White with this skier-first dashboard.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://bw-report.netlify.app/">
+    <meta property="og:image" content="https://bw-report.netlify.app/assets/social/og-image.png">
+    <meta property="og:locale" content="en_CA">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Big White Snow Report — Live Conditions & Forecast">
+    <meta name="twitter:description" content="Ski-ready dashboard with Big White snowfall history, next storm preview, and on-mountain insights.">
+    <meta name="twitter:image" content="https://bw-report.netlify.app/assets/social/twitter-card.png">
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Load Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!--
+        emptycan.com
+    -->
+    <style>
+        /* Use Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Use a light gray background */
+        }
+        /* Style for the "mega" metrics */
+        .stat-metric {
+            font-weight: 900; /* Black */
+            font-size: 3rem; /* 48px */
+            line-height: 1;
+            color: #1e3a8a; /* Deep blue */
+        }
+        .stat-label {
+            font-weight: 600; /* Semibold */
+            font-size: 1rem; /* 16px */
+            color: #4b5563; /* Gray-600 */
+        }
+        /* Custom scrollbar for hourly forecast */
+        .hourly-forecast {
+            overflow-x: auto;
+            white-space: nowrap;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .hourly-forecast::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+        @media (max-width: 640px) {
+            body {
+                font-size: 0.85rem; /* Reduce base type by ~15% on phones */
+            }
+        }
+        .chart-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .chart-scroll-inner {
+            min-width: 640px;
+        }
+        @media (min-width: 768px) {
+            .chart-scroll-inner {
+                min-width: 100%;
+            }
+        }
+    </style>
+    <script type="text/javascript">
+	(function (c, l, a, r, i, t, y) {
+		c[a] = c[a] || function () {(c[a].q = c[a].q || []).push(arguments)};
+		t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
+		y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+	})(window, document, "clarity", "script", "qq7ezd2qwp");
+</script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SportsActivityLocation",
+      "name": "Big White Snow Report",
+      "description": "Real-time snow report, forecast, and mountain intelligence for Big White skiers and snowboarders.",
+      "sport": "Skiing",
+      "url": "https://bw-report.netlify.app/",
+      "image": "https://bw-report.netlify.app/assets/social/og-image.png",
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 49.73,
+        "longitude": -118.94
+      },
+      "areaServed": {
+        "@type": "AdministrativeArea",
+        "name": "Big White Ski Resort, British Columbia"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Snowlab",
+        "url": "https://bw-report.netlify.app/"
+      },
+      "sameAs": [
+        "https://www.bigwhite.com/",
+        "https://www.instagram.com/bigwhiteskiarea/",
+        "https://www.facebook.com/bigwhiteskiarea/"
+      ]
+    }
+    </script>
+</head>
+<body class="bg-gray-100 p-4 md:p-8">
+
+    <div class="max-w-8xl mx-auto">
+        <!-- Header -->
+        <header class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Big White Snow Report</h1>
+                <p class="text-lg text-gray-600">Live mountain conditions dashboard.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="#chatgpt-planner"
+                   class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition">
+                    <span>Plan in ChatGPT</span>
+                    <span aria-hidden="true">↗</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <main class="grid grid-cols-1 lg:grid-cols-[minmax(0,_6fr)_minmax(0,_2fr)] gap-6">
+
+            <!-- Left Column: Current Stats -->
+            <section>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Current Conditions</h2>
+                    <p class="text-sm text-gray-500 mb-4" id="last-updated">Updating...</p>
+                    <p class="text-base text-gray-700 mb-6 flex items-center gap-2">
+                        <span id="current-weather-icon" class="text-2xl">🌨️</span>
+                        <span id="current-weather-summary">Pulling the latest Big White vibes...</span>
+                    </p>
+
+                    <!-- Main Stats Grid -->
+                    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 text-center">
+                        <!-- Current Temp -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="stat-metric" id="current-temp">--°</div>
+                            <div class="stat-label">Current Temp</div>
+                        </div>
+
+                        <!-- Feels Like -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="stat-metric" id="feels-like">--°</div>
+                            <div class="stat-label">Feels Like</div>
+                        </div>
+                        
+                        <!-- 24h Snow -->
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="stat-metric" id="24h-snow">--<span class="text-2xl ml-1">cm</span></div>
+                            <div class="stat-label">24h Snowfall</div>
+                        </div>
+
+                        <!-- Snow Base -->
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="stat-metric" id="snow-base">--<span class="text-2xl ml-1">cm</span></div>
+                            <div class="stat-label">Snow Base</div>
+                        </div>
+
+                        <!-- Wind Speed -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="stat-metric" id="wind-speed">--<span class="text-2xl ml-1">km/h</span></div>
+                            <div class="stat-label">Ridge Wind</div>
+                        </div>
+
+                        <!-- Wind Gusts -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="stat-metric" id="wind-gust">--<span class="text-2xl ml-1">km/h</span></div>
+                            <div class="stat-label">Peak Gust</div>
+                        </div>
+
+                        <!-- Next Hour Precip Chance -->
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="stat-metric" id="precip-prob-now">--<span class="text-2xl ml-1">%</span></div>
+                            <div class="stat-label">Next Hour Snow Chance</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 24-Hour Hourly Forecast -->
+                <div class="bg-white p-6 rounded-lg shadow-md mt-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">24-Hour Forecast</h2>
+                    <div class="hourly-forecast pb-2">
+                        <!-- Hourly cards will be injected here by JS -->
+                        <div id="hourly-container" class="flex space-x-4">
+                            <!-- Loading skeleton -->
+                            <div class="flex-none w-28 text-center bg-gray-50 p-3 rounded-lg animate-pulse">
+                                <div class="font-semibold text-sm">--:--</div>
+                                <div class="font-bold text-xl my-1">--°</div>
+                                <div class="text-xs text-blue-600">-- cm</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mountain Insights -->
+                <div class="bg-white p-6 rounded-lg shadow-md mt-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Mountain Insights</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Visibility</p>
+                            <p class="text-xl font-bold text-gray-800" id="visibility-now">-- km</p>
+                            <p class="text-gray-500 mt-1">Spot the ridgelines before you drop in.</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Cloud Cover</p>
+                            <p class="text-xl font-bold text-gray-800" id="cloud-cover-now">--%</p>
+                            <p class="text-gray-500 mt-1">Quick read on flat-light potential.</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Freezing Level</p>
+                            <p class="text-xl font-bold text-gray-800" id="freezing-level-now">-- m</p>
+                            <p class="text-gray-500 mt-1">Helps call the best elevation for soft turns.</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Liquid Precip</p>
+                            <p class="text-xl font-bold text-gray-800" id="liquid-precip-now">-- mm</p>
+                            <p class="text-gray-500 mt-1">Watch for mixed precip or crust builders.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Snow Trend -->
+                <div class="bg-white p-6 rounded-lg shadow-md mt-6">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0 mb-4">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Snow Trend</h2>
+                            <p class="text-sm text-gray-500 mt-1">Past 7 days observed snowfall vs. next 7 days forecast.</p>
+                        </div>
+                        <div class="text-sm text-gray-500 sm:text-right">
+                            <span id="snow-trend-last-updated">Updating...</span>
+                        </div>
+                    </div>
+                    <div class="chart-scroll">
+                        <div class="chart-scroll-inner h-64">
+                            <canvas id="snow-trend-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Temperature Profile -->
+                <div class="bg-white p-6 rounded-lg shadow-md mt-6">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0 mb-4">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Temperature Profile</h2>
+                            <p class="text-sm text-gray-500 mt-1">Next 24 hours, actual vs. feels like. Blue fill shows sub-freezing hours.</p>
+                        </div>
+                        <span class="text-sm text-gray-500 sm:text-right" id="temperature-profile-window">Updating...</span>
+                    </div>
+                    <div class="chart-scroll">
+                        <div class="chart-scroll-inner h-64 md:h-72">
+                            <canvas id="temperature-profile-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Freezing Level Tracker -->
+                <div class="bg-white p-6 rounded-lg shadow-md mt-6">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0 mb-4">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Freezing Level Tracker</h2>
+                            <p class="text-sm text-gray-500 mt-1">Hourly freezing level compared to village, mid-mountain, and summit elevations.</p>
+                        </div>
+                        <span class="text-sm text-gray-500 sm:text-right" id="freezing-level-window">Updating...</span>
+                    </div>
+                    <div class="chart-scroll">
+                        <div class="chart-scroll-inner h-64 md:h-72">
+                            <canvas id="freezing-level-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wind vs Gusts -->
+                <div class="bg-white p-6 rounded-lg shadow-md mt-6">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0 mb-4">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Wind vs. Gusts</h2>
+                            <p class="text-sm text-gray-500 mt-1">Watch ridge winds against the gust line. Red band marks typical lift hold threshold.</p>
+                        </div>
+                        <span class="text-sm text-gray-500 sm:text-right" id="wind-profile-window">Updating...</span>
+                    </div>
+                    <div class="chart-scroll">
+                        <div class="chart-scroll-inner h-64 md:h-72">
+                            <canvas id="wind-gust-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Yesterday vs Today -->
+                <div class="bg-white p-6 rounded-lg shadow-md mt-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Yesterday vs Today</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-xs uppercase tracking-wide text-gray-500 mb-3">24h Snow</p>
+                            <div class="flex items-baseline justify-between gap-4">
+                                <div>
+                                    <p class="text-xs uppercase text-gray-500">Today</p>
+                                    <p class="text-2xl font-black text-blue-700" id="compare-snow-today">--</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs uppercase text-gray-500">Yesterday</p>
+                                    <p class="text-2xl font-semibold text-gray-700" id="compare-snow-yesterday">--</p>
+                                </div>
+                            </div>
+                            <p class="mt-3 text-sm font-medium text-gray-600" id="compare-snow-delta">Historical data loading...</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-xs uppercase tracking-wide text-gray-500 mb-3">High Temp</p>
+                            <div class="flex items-baseline justify-between gap-4">
+                                <div>
+                                    <p class="text-xs uppercase text-gray-500">Today</p>
+                                    <p class="text-2xl font-black text-blue-700" id="compare-temp-today">--</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs uppercase text-gray-500">Yesterday</p>
+                                    <p class="text-2xl font-semibold text-gray-700" id="compare-temp-yesterday">--</p>
+                                </div>
+                            </div>
+                            <p class="mt-3 text-sm font-medium text-gray-600" id="compare-temp-delta">Historical data loading...</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-xs uppercase tracking-wide text-gray-500 mb-3">Peak Gust</p>
+                            <div class="flex items-baseline justify-between gap-4">
+                                <div>
+                                    <p class="text-xs uppercase text-gray-500">Today</p>
+                                    <p class="text-2xl font-black text-blue-700" id="compare-gust-today">--</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs uppercase text-gray-500">Yesterday</p>
+                                    <p class="text-2xl font-semibold text-gray-700" id="compare-gust-yesterday">--</p>
+                                </div>
+                            </div>
+                            <p class="mt-3 text-sm font-medium text-gray-600" id="compare-gust-delta">Historical data loading...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ChatGPT Trip Planner -->
+                <div id="chatgpt-planner" class="bg-white p-6 rounded-lg shadow-md mt-6">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">ChatGPT Trip Planner</h2>
+                            <p class="text-sm text-gray-500 mt-1">
+                                Copy a structured SnowLab snapshot, then drop it into ChatGPT to plan laps, gear, or road timing with live data.
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2 sm:text-right">
+                            <button id="copy-chat-json"
+                                class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition">
+                                Copy SnowLab JSON
+                            </button>
+                            <a href="https://chat.openai.com/" target="_blank" rel="noopener noreferrer"
+                               class="px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-lg transition">
+                                Open ChatGPT
+                            </a>
+                        </div>
+                    </div>
+                    <pre id="chat-json-preview" class="bg-gray-900 text-gray-100 text-xs sm:text-sm leading-relaxed rounded-lg p-4 overflow-x-auto max-h-64">
+Awaiting live data...
+                    </pre>
+                    <p id="chat-json-status" class="text-xs text-gray-500 mt-2">Tip: paste the JSON into ChatGPT with a prompt like “Use this SnowLab data to plan tomorrow’s ski day.”</p>
+                </div>
+            </section>
+
+            <!-- Right Column: Webcams & 7-Day -->
+            <aside class="flex flex-col gap-6">
+                <!-- Webcams -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Mountain Cams</h2>
+                    <p class="text-gray-600 mb-4">Links to the official Big White live feeds. These feeds aren't embeddable, so click the link to see them all.</p>
+                    <a href="https://www.bigwhite.com/mountain-conditions/webcams" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="block w-full text-center bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200">
+                       View All Live Cams
+                    </a>
+                    <ul class="list-disc list-inside mt-4 text-gray-600 space-y-1">
+                        <li>Village Centre</li>
+                        <li>The Cliff</li>
+                        <li>Gem Lake</li>
+                        <li>Happy Valley</li>
+                        <li>Snow Ghost</li>
+                    </ul>
+                </div>
+
+                <!-- Sun & Light -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Sun & Light</h2>
+                    <div class="space-y-3 text-sm text-gray-700">
+                        <div class="flex items-center justify-between">
+                            <span class="font-semibold">Sunrise</span>
+                            <span id="sunrise-time">--:--</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="font-semibold">Sunset</span>
+                            <span id="sunset-time">--:--</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="font-semibold">Daylight</span>
+                            <span id="daylight-duration">-- h</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 7-Day Forecast -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">7-Day Forecast</h2>
+                    <div id="7-day-container" class="space-y-3">
+                        <!-- Daily forecast items will be injected here -->
+                        <!-- Loading skeleton -->
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg animate-pulse">
+                            <div class="font-semibold w-1/3">------</div>
+                            <div class="font-medium text-blue-600 w-1/3 text-center">-- cm</div>
+                            <div class="font-medium text-right w-1/3">--°/--°</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <script>
+        const WEATHER_CODES = {
+            0: { icon: '☀️', label: 'Clear skies' },
+            1: { icon: '🌤️', label: 'Mainly clear' },
+            2: { icon: '⛅', label: 'Partly cloudy' },
+            3: { icon: '☁️', label: 'Overcast' },
+            45: { icon: '🌫️', label: 'Foggy' },
+            48: { icon: '🌫️', label: 'Rime fog' },
+            51: { icon: '🌦️', label: 'Light drizzle' },
+            53: { icon: '🌦️', label: 'Moderate drizzle' },
+            55: { icon: '🌧️', label: 'Heavy drizzle' },
+            56: { icon: '🌧️', label: 'Freezing drizzle' },
+            57: { icon: '🌧️', label: 'Freezing drizzle' },
+            61: { icon: '🌦️', label: 'Light rain' },
+            63: { icon: '🌧️', label: 'Rain showers' },
+            65: { icon: '🌧️', label: 'Heavy rain' },
+            66: { icon: '🌨️', label: 'Freezing rain' },
+            67: { icon: '🌨️', label: 'Freezing rain' },
+            71: { icon: '🌨️', label: 'Light snow' },
+            73: { icon: '❄️', label: 'Snow' },
+            75: { icon: '❄️', label: 'Heavy snow' },
+            77: { icon: '🌬️', label: 'Snow grains' },
+            80: { icon: '🌦️', label: 'Rain showers' },
+            81: { icon: '🌧️', label: 'Rain showers' },
+            82: { icon: '🌧️', label: 'Heavy rain showers' },
+            85: { icon: '🌨️', label: 'Snow showers' },
+            86: { icon: '❄️', label: 'Heavy snow showers' },
+            95: { icon: '⛈️', label: 'Thunderstorm' },
+            96: { icon: '⛈️', label: 'Thunderstorm + hail' },
+            99: { icon: '⛈️', label: 'Severe thunderstorm' }
+        };
+
+        const FALLBACK = '--';
+        const CACHE_KEY = 'bigwhite-weather-cache-v2';
+        const CACHE_TTL_MS = 10 * 60 * 1000;
+        const TIME_ZONE = 'America/Vancouver';
+        const HISTORICAL_LOOKBACK_DAYS = 7;
+        const RESORT_ELEVATIONS = [
+            { label: 'Village', value: 1710 },
+            { label: 'Mid-Mountain', value: 1950 },
+            { label: 'Summit', value: 2319 }
+        ];
+        const WIND_THRESHOLD_HOLD = 70; // km/h
+        const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast?latitude=49.73&longitude=-118.94&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,snowfall,snow_depth&hourly=temperature_2m,apparent_temperature,snowfall,snow_depth,precipitation,precipitation_probability,weather_code,visibility,cloud_cover,wind_speed_10m,wind_gusts_10m,freezing_level_height&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,sunrise,sunset,daylight_duration&timezone=America%2FVancouver&forecast_days=7&windspeed_unit=kmh&precipitation_unit=mm';
+        let snowTrendChart = null;
+        let temperatureProfileChart = null;
+        let freezingLevelChart = null;
+        let windGustChart = null;
+        let latestChatPayload = null;
+
+        const holdZonePlugin = {
+            id: 'holdZone',
+            beforeDraw(chart, args, opts) {
+                if (!opts || typeof opts.threshold !== 'number') {
+                    return;
+                }
+                const axis = opts.axis || 'y';
+                const yScale = chart.scales[axis];
+                if (!yScale) {
+                    return;
+                }
+                const { ctx, chartArea } = chart;
+                const threshold = opts.threshold;
+                const yPixel = yScale.getPixelForValue(threshold);
+                ctx.save();
+                ctx.fillStyle = opts.fillColor || 'rgba(220, 38, 38, 0.12)';
+                ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, Math.max(0, yPixel - chartArea.top));
+                ctx.restore();
+            }
+        };
+
+        const freezingElevationPlugin = {
+            id: 'freezingElevation',
+            afterDraw(chart, args, opts) {
+                if (!opts || !Array.isArray(opts.elevations)) {
+                    return;
+                }
+                const yScale = chart.scales.y;
+                if (!yScale) {
+                    return;
+                }
+                const { ctx, chartArea } = chart;
+                ctx.save();
+                ctx.fillStyle = opts.color || '#94a3b8';
+                ctx.font = opts.font || '12px "Inter", sans-serif';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                opts.elevations.forEach((band, index) => {
+                    const y = yScale.getPixelForValue(band.value);
+                    if (y >= chartArea.top && y <= chartArea.bottom) {
+                        ctx.fillText(`${band.label} ${Math.round(band.value)} m`, chartArea.right - 6, y);
+                    }
+                });
+                ctx.restore();
+            }
+        };
+
+        if (typeof Chart !== 'undefined') {
+            Chart.register(holdZonePlugin, freezingElevationPlugin);
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeDashboard);
+
+        function initializeDashboard() {
+            const cached = loadCachedSnapshot();
+            if (cached) {
+                renderAll(cached.forecast, cached.historical, { fromCache: true, stale: cached.isStale });
+            }
+            fetchWeatherData(Boolean(cached));
+            const copyButton = document.getElementById('copy-chat-json');
+            if (copyButton) {
+                copyButton.addEventListener('click', handleCopyChatJson);
+            }
+        }
+
+        function getWeatherDetails(code) {
+            return WEATHER_CODES[code] || { icon: '🌡️', label: 'Conditions updating' };
+        }
+
+        function loadCachedSnapshot() {
+            try {
+                const raw = localStorage.getItem(CACHE_KEY);
+                if (!raw) {
+                    return null;
+                }
+                const parsed = JSON.parse(raw);
+                if (!parsed || !parsed.forecast) {
+                    return null;
+                }
+                const age = Date.now() - parsed.timestamp;
+                return {
+                    forecast: parsed.forecast,
+                    historical: parsed.historical || null,
+                    timestamp: parsed.timestamp,
+                    isStale: age > CACHE_TTL_MS
+                };
+            } catch (error) {
+                console.warn('Failed to load cached snapshot', error);
+                return null;
+            }
+        }
+
+        function saveCachedSnapshot(forecast, historical) {
+            try {
+                const payload = {
+                    forecast,
+                    historical,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
+            } catch (error) {
+                console.warn('Failed to cache snapshot', error);
+            }
+        }
+
+        async function fetchWeatherData(cacheWasUsed) {
+            try {
+                const forecast = await fetchForecastData();
+                let historical = null;
+                try {
+                    historical = await fetchHistoricalData();
+                } catch (historyError) {
+                    console.warn('Historical data unavailable', historyError);
+                }
+                renderAll(forecast, historical);
+                saveCachedSnapshot(forecast, historical);
+            } catch (error) {
+                console.error('Failed to fetch weather data:', error);
+                const lastUpdated = document.getElementById('last-updated');
+                if (cacheWasUsed) {
+                    const currentText = lastUpdated.textContent || 'Using cached snapshot.';
+                    if (!currentText.includes('cached snapshot')) {
+                        lastUpdated.textContent = `${currentText} (cached snapshot)`;
+                    } else {
+                        lastUpdated.textContent = currentText;
+                    }
+                } else {
+                    lastUpdated.textContent = 'Failed to load data. Please try again later.';
+                }
+            }
+        }
+
+        async function fetchForecastData() {
+            const response = await fetchWithRetry(FORECAST_URL, {}, 2);
+            return response.json();
+        }
+
+        async function fetchHistoricalData() {
+            const historicalUrl = buildHistoricalUrl();
+            const response = await fetchWithRetry(historicalUrl, {}, 2);
+            return response.json();
+        }
+
+        function buildHistoricalUrl() {
+            const startDate = getDateString(-HISTORICAL_LOOKBACK_DAYS);
+            const endDate = getDateString(-1);
+            return `https://archive-api.open-meteo.com/v1/archive?latitude=49.73&longitude=-118.94&start_date=${startDate}&end_date=${endDate}&daily=temperature_2m_max,temperature_2m_min,snowfall_sum,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max&timezone=America%2FVancouver&windspeed_unit=kmh&precipitation_unit=mm`;
+        }
+
+        function getDateString(offsetDays = 0) {
+            const now = new Date();
+            const tzNow = new Date(now.toLocaleString('en-US', { timeZone: TIME_ZONE }));
+            tzNow.setDate(tzNow.getDate() + offsetDays);
+            const year = tzNow.getFullYear();
+            const month = String(tzNow.getMonth() + 1).padStart(2, '0');
+            const day = String(tzNow.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function renderAll(forecast, historical, options = {}) {
+            if (!forecast) {
+                return;
+            }
+            updateCurrentConditions(forecast, options);
+            updateHourlyForecast(forecast);
+            updateMountainInsights(forecast);
+            updateSunlight(forecast);
+            updateTemperatureProfileChart(forecast);
+            updateFreezingLevelChart(forecast);
+            updateWindGustChart(forecast);
+            updateSnowTrendChart(forecast, historical);
+            updateHistoricalComparison(forecast, historical);
+            updateChatPlanner(forecast, historical);
+            update7DayForecast(forecast);
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function fetchWithRetry(url, options = {}, retries = 2, backoffMs = 1500) {
+            let attempt = 0;
+            while (attempt <= retries) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response;
+                } catch (error) {
+                    if (attempt === retries) {
+                        throw error;
+                    }
+                    attempt += 1;
+                    await delay(backoffMs * attempt);
+                }
+            }
+        }
+
+        function formatValue(value, { suffix = '', decimals = 0, fallback = FALLBACK } = {}) {
+            if (value === null || value === undefined || value === '') {
+                return `${fallback}${suffix}`;
+            }
+            const number = Number(value);
+            if (!Number.isFinite(number)) {
+                return `${fallback}${suffix}`;
+            }
+            const rounded = decimals > 0 ? number.toFixed(decimals) : Math.round(number);
+            return `${rounded}${suffix}`;
+        }
+
+        function formatKm(valueInMeters, decimals = 1) {
+            if (valueInMeters === null || valueInMeters === undefined || valueInMeters === '') {
+                return `${FALLBACK} km`;
+            }
+            const number = Number(valueInMeters);
+            if (Number.isFinite(number)) {
+                return `${(number / 1000).toFixed(decimals)} km`;
+            }
+            return `${FALLBACK} km`;
+        }
+
+        function formatDuration(seconds) {
+            if (seconds === null || seconds === undefined || seconds === '') {
+                return `${FALLBACK} h`;
+            }
+            const number = Number(seconds);
+            if (!Number.isFinite(number)) {
+                return `${FALLBACK} h`;
+            }
+            const hours = Math.floor(number / 3600);
+            const minutes = Math.round((number % 3600) / 60);
+            if (minutes === 0) {
+                return `${hours} h`;
+            }
+            return `${hours} h ${minutes} m`;
+        }
+
+        function getHourIndex(hourly, referenceTime) {
+            if (!hourly || !Array.isArray(hourly.time)) return 0;
+            const reference = referenceTime ? new Date(referenceTime) : new Date();
+            const aligned = new Date(reference);
+            aligned.setMinutes(0, 0, 0);
+
+            let index = hourly.time.findIndex(timeStr => {
+                const time = new Date(timeStr);
+                return time.getTime() === aligned.getTime();
+            });
+
+            if (index === -1) {
+                index = hourly.time.findIndex(timeStr => new Date(timeStr) >= reference);
+            }
+
+            return index === -1 ? 0 : index;
+        }
+
+        function getDailyValue(dataset, key, index = 0) {
+            if (!dataset || !dataset.daily) {
+                return null;
+            }
+            const series = dataset.daily[key];
+            if (!Array.isArray(series) || series.length === 0) {
+                return null;
+            }
+            const normalizedIndex = index < 0 ? series.length + index : index;
+            if (normalizedIndex < 0 || normalizedIndex >= series.length) {
+                return null;
+            }
+            const value = Number(series[normalizedIndex]);
+            return Number.isFinite(value) ? value : null;
+        }
+
+        function buildComparison(today, yesterday, { suffix = '', decimals = 0 } = {}) {
+            return {
+                todayText: formatValue(today, { suffix, decimals }),
+                yesterdayText: formatValue(yesterday, { suffix, decimals }),
+                deltaText: formatDelta(today, yesterday, { suffix, decimals }),
+                deltaValue: computeDelta(today, yesterday)
+            };
+        }
+
+        function formatDelta(today, yesterday, { suffix = '', decimals = 0 } = {}) {
+            const todayNumber = Number(today);
+            const yesterdayNumber = Number(yesterday);
+            if (!Number.isFinite(todayNumber) || !Number.isFinite(yesterdayNumber)) {
+                return '--';
+            }
+            const delta = todayNumber - yesterdayNumber;
+            const formatted = decimals > 0 ? delta.toFixed(decimals) : Math.round(delta);
+            const sign = delta > 0 ? '+' : '';
+            return `${sign}${formatted}${suffix}`;
+        }
+
+        function computeDelta(today, yesterday) {
+            const todayNumber = Number(today);
+            const yesterdayNumber = Number(yesterday);
+            if (!Number.isFinite(todayNumber) || !Number.isFinite(yesterdayNumber)) {
+                return null;
+            }
+            return todayNumber - yesterdayNumber;
+        }
+
+        function applyDeltaStyles(element, delta) {
+            const colorClasses = ['text-green-600', 'text-red-600', 'text-gray-500', 'text-gray-600'];
+            colorClasses.forEach(cls => element.classList.remove(cls));
+
+            if (delta === null) {
+                element.classList.add('text-gray-500');
+            } else if (delta > 0) {
+                element.classList.add('text-green-600');
+            } else if (delta < 0) {
+                element.classList.add('text-red-600');
+            } else {
+                element.classList.add('text-gray-600');
+            }
+        }
+
+        function formatDateLabel(date) {
+            return date.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function formatRangeLabel(start, end) {
+            if (!start || !end) {
+                return null;
+            }
+            if (start.getTime() === end.getTime()) {
+                return start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+            const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+            if (sameMonth) {
+                const month = start.toLocaleDateString('en-US', { month: 'short' });
+                return `${month} ${start.getDate()} – ${end.getDate()}`;
+            }
+            const startLabel = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const endLabel = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `${startLabel} – ${endLabel}`;
+        }
+
+        function formatHourLabel(date) {
+            return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }).replace(' ', '');
+        }
+
+        function toNumber(value, decimals = 1) {
+            const number = Number(value);
+            if (!Number.isFinite(number)) {
+                return null;
+            }
+            return Number(number.toFixed(decimals));
+        }
+
+        function buildHourlyWindow(hourly, keys, hours = 24, referenceTime) {
+            if (!hourly || !Array.isArray(hourly.time)) {
+                return null;
+            }
+            const startIndex = getHourIndex(hourly, referenceTime);
+            const endIndex = Math.min(startIndex + hours, hourly.time.length);
+            if (startIndex >= endIndex) {
+                return null;
+            }
+            const labels = [];
+            const timestamps = [];
+            const datasets = {};
+            keys.forEach(key => { datasets[key] = []; });
+
+            let windowStart = null;
+            let windowEnd = null;
+
+            for (let i = startIndex; i < endIndex; i++) {
+                const timestamp = hourly.time[i];
+                const date = new Date(timestamp);
+                labels.push(formatHourLabel(date));
+                timestamps.push(new Date(timestamp).toISOString());
+                windowStart = windowStart || date;
+                windowEnd = date;
+
+                keys.forEach(key => {
+                    const series = hourly[key];
+                    if (series && Array.isArray(series)) {
+                        const value = Number(series[i]);
+                        datasets[key].push(Number.isFinite(value) ? value : null);
+                    } else {
+                        datasets[key].push(null);
+                    }
+                });
+            }
+
+            return { labels, datasets, timestamps, start: windowStart, end: windowEnd };
+        }
+
+        function buildSnowTrendSeries(forecast, historical) {
+            const labels = [];
+            const pastSeries = [];
+            const futureSeries = [];
+            let pastStart = null;
+            let pastEnd = null;
+            let futureStart = null;
+            let futureEnd = null;
+
+            if (historical && historical.daily && Array.isArray(historical.daily.time) && Array.isArray(historical.daily.snowfall_sum)) {
+                historical.daily.time.forEach((time, idx) => {
+                    const date = new Date(`${time}T00:00:00`);
+                    const label = formatDateLabel(date);
+                    const valueRaw = Number(historical.daily.snowfall_sum[idx]);
+                    const value = Number.isFinite(valueRaw) ? Number(valueRaw.toFixed(1)) : null;
+                    labels.push(label);
+                    pastSeries.push(value);
+                    futureSeries.push(null);
+                    pastStart = pastStart || date;
+                    pastEnd = date;
+                });
+            }
+
+            const labelIndex = new Map();
+            labels.forEach((label, idx) => labelIndex.set(label, idx));
+
+            if (forecast && forecast.daily && Array.isArray(forecast.daily.time) && Array.isArray(forecast.daily.snowfall_sum)) {
+                forecast.daily.time.forEach((time, idx) => {
+                    const date = new Date(`${time}T00:00:00`);
+                    const label = formatDateLabel(date);
+                    const valueRaw = Number(forecast.daily.snowfall_sum[idx]);
+                    const value = Number.isFinite(valueRaw) ? Number(valueRaw.toFixed(1)) : null;
+                    if (labelIndex.has(label)) {
+                        const existingIndex = labelIndex.get(label);
+                        futureSeries[existingIndex] = value;
+                    } else {
+                        labels.push(label);
+                        pastSeries.push(null);
+                        futureSeries.push(value);
+                        labelIndex.set(label, labels.length - 1);
+                    }
+                    futureStart = futureStart || date;
+                    futureEnd = date;
+                });
+            }
+
+            return {
+                labels,
+                pastSeries,
+                futureSeries,
+                pastStart,
+                pastEnd,
+                futureStart,
+                futureEnd
+            };
+        }
+
+        function updateSnowTrendChart(forecastData, historicalData) {
+            const canvas = document.getElementById('snow-trend-chart');
+            const statusEl = document.getElementById('snow-trend-last-updated');
+
+            if (!canvas || !statusEl || typeof Chart === 'undefined') {
+                return;
+            }
+
+            const series = buildSnowTrendSeries(forecastData, historicalData);
+
+            if (!series || series.labels.length === 0) {
+                statusEl.textContent = 'Snow trend unavailable.';
+                if (snowTrendChart) {
+                    snowTrendChart.destroy();
+                    snowTrendChart = null;
+                }
+                return;
+            }
+
+            const observedRange = formatRangeLabel(series.pastStart, series.pastEnd);
+            const forecastRange = formatRangeLabel(series.futureStart, series.futureEnd);
+
+            const ctx = canvas.getContext('2d');
+            const chartData = {
+                labels: series.labels,
+                datasets: [
+                    {
+                        label: 'Observed',
+                        data: series.pastSeries,
+                        borderColor: '#1e3a8a',
+                        backgroundColor: 'rgba(30, 58, 138, 0.15)',
+                        borderWidth: 2,
+                        fill: 'origin',
+                        spanGaps: false,
+                        tension: 0.3,
+                        pointRadius: 3,
+                        pointHoverRadius: 4
+                    },
+                    {
+                        label: 'Forecast',
+                        data: series.futureSeries,
+                        borderColor: '#60a5fa',
+                        backgroundColor: 'rgba(96, 165, 250, 0.15)',
+                        borderWidth: 2,
+                        borderDash: [6, 4],
+                        fill: false,
+                        spanGaps: true,
+                        tension: 0.3,
+                        pointRadius: 3,
+                        pointHoverRadius: 4
+                    }
+                ]
+            };
+
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label(context) {
+                                const value = context.parsed.y;
+                                if (value === null || Number.isNaN(value)) {
+                                    return `${context.dataset.label}: --`;
+                                }
+                                return `${context.dataset.label}: ${value.toFixed(1)} cm`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: false
+                        },
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Snowfall (cm)'
+                        },
+                        ticks: {
+                            callback(value) {
+                                return `${value} cm`;
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.2)'
+                        }
+                    }
+                }
+            };
+
+            if (snowTrendChart) {
+                snowTrendChart.data.labels = chartData.labels;
+                snowTrendChart.data.datasets[0].data = chartData.datasets[0].data;
+                snowTrendChart.data.datasets[1].data = chartData.datasets[1].data;
+                snowTrendChart.update();
+            } else {
+                snowTrendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: chartData,
+                    options: chartOptions
+                });
+        }
+
+        const observedText = observedRange ? `Observed ${observedRange}` : 'Observed data unavailable';
+        const forecastText = forecastRange ? `Forecast ${forecastRange}` : 'Forecast data unavailable';
+        statusEl.textContent = `${observedText} · ${forecastText}`;
+    }
+
+        function formatWindowLabel(start, end) {
+            if (!start || !end) {
+                return 'No recent data';
+            }
+            const startLabel = `${start.toLocaleDateString('en-US', { weekday: 'short' })} ${formatHourLabel(start)}`;
+            const endLabel = `${end.toLocaleDateString('en-US', { weekday: 'short' })} ${formatHourLabel(end)}`;
+            return `${startLabel} – ${endLabel}`;
+        }
+
+        function updateTemperatureProfileChart(data) {
+            const canvas = document.getElementById('temperature-profile-chart');
+            const windowLabel = document.getElementById('temperature-profile-window');
+            if (!canvas || !windowLabel || typeof Chart === 'undefined') {
+                return;
+            }
+
+            const hourly = data ? data.hourly : null;
+            const windowData = buildHourlyWindow(hourly, ['temperature_2m', 'apparent_temperature'], 24, data && data.current ? data.current.time : undefined);
+
+            if (!windowData) {
+                windowLabel.textContent = 'Temperature data unavailable.';
+                if (temperatureProfileChart) {
+                    temperatureProfileChart.destroy();
+                    temperatureProfileChart = null;
+                }
+                return;
+            }
+
+            windowLabel.textContent = formatWindowLabel(windowData.start, windowData.end);
+
+            const temps = windowData.datasets['temperature_2m'];
+            const feels = windowData.datasets['apparent_temperature'];
+            const negativeArea = temps.map(val => (Number.isFinite(val) && val < 0 ? val : null));
+
+            const allValues = temps.concat(feels).filter(val => Number.isFinite(val));
+            const minVal = allValues.length ? Math.min(...allValues) : -10;
+            const maxVal = allValues.length ? Math.max(...allValues) : 5;
+            const suggestedMin = Math.min(-5, Math.floor((minVal - 2) / 2) * 2);
+            const suggestedMax = Math.max(5, Math.ceil((maxVal + 2) / 2) * 2);
+
+            const chartData = {
+                labels: windowData.labels,
+                datasets: [
+                    {
+                        label: 'Sub-freezing window',
+                        data: negativeArea,
+                        type: 'line',
+                        borderColor: 'transparent',
+                        backgroundColor: 'rgba(59, 130, 246, 0.18)',
+                        fill: { target: { value: 0 } },
+                        pointRadius: 0,
+                        spanGaps: false
+                    },
+                    {
+                        label: 'Actual Temp (°C)',
+                        data: temps,
+                        borderColor: '#2563eb',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        fill: false,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Feels Like (°C)',
+                        data: feels,
+                        borderColor: '#38bdf8',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        borderDash: [6, 4],
+                        fill: false,
+                        tension: 0.3
+                    }
+                ]
+            };
+
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                            filter(item, data) {
+                                return item.text !== 'Sub-freezing window';
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label(context) {
+                                const value = context.parsed.y;
+                                if (value === null || Number.isNaN(value)) {
+                                    return `${context.dataset.label}: --`;
+                                }
+                                return `${context.dataset.label}: ${value.toFixed(1)}°C`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false }
+                    },
+                    y: {
+                        suggestedMin,
+                        suggestedMax,
+                        title: {
+                            display: true,
+                            text: 'Temperature (°C)'
+                        },
+                        ticks: {
+                            callback(value) {
+                                return `${value}°`;
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.2)'
+                        }
+                    }
+                }
+            };
+
+            if (temperatureProfileChart) {
+                temperatureProfileChart.data = chartData;
+                temperatureProfileChart.options = chartOptions;
+                temperatureProfileChart.update();
+            } else {
+                temperatureProfileChart = new Chart(canvas.getContext('2d'), {
+                    type: 'line',
+                    data: chartData,
+                    options: chartOptions
+                });
+            }
+        }
+
+        function updateFreezingLevelChart(data) {
+            const canvas = document.getElementById('freezing-level-chart');
+            const windowLabel = document.getElementById('freezing-level-window');
+            if (!canvas || !windowLabel || typeof Chart === 'undefined') {
+                return;
+            }
+
+            const hourly = data ? data.hourly : null;
+            const windowData = buildHourlyWindow(hourly, ['freezing_level_height'], 24, data && data.current ? data.current.time : undefined);
+
+            if (!windowData) {
+                windowLabel.textContent = 'Freezing level data unavailable.';
+                if (freezingLevelChart) {
+                    freezingLevelChart.destroy();
+                    freezingLevelChart = null;
+                }
+                return;
+            }
+
+            windowLabel.textContent = formatWindowLabel(windowData.start, windowData.end);
+
+            const freezingLevels = windowData.datasets['freezing_level_height'].map(val => (Number.isFinite(val) ? Math.round(val) : null));
+            const numericValues = freezingLevels.filter(val => Number.isFinite(val));
+            const maxVal = numericValues.length ? Math.max(...numericValues) : 2500;
+            const suggestedMax = Math.max(2400, Math.ceil((maxVal + 200) / 100) * 100);
+
+            const elevationColors = ['#94a3b8', '#cbd5f5', '#e2e8f0'];
+            const elevationDatasets = RESORT_ELEVATIONS.map((band, index) => ({
+                label: `${band.label} (${band.value} m)`,
+                data: new Array(windowData.labels.length).fill(band.value),
+                borderColor: elevationColors[index % elevationColors.length],
+                borderWidth: 1.5,
+                borderDash: [6, 4],
+                pointRadius: 0,
+                fill: false
+            }));
+
+            const chartData = {
+                labels: windowData.labels,
+                datasets: [
+                    {
+                        label: 'Freezing Level (m)',
+                        data: freezingLevels,
+                        borderColor: '#38bdf8',
+                        borderWidth: 3,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        tension: 0.35,
+                        fill: false
+                    },
+                    ...elevationDatasets
+                ]
+            };
+
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        labels: { usePointStyle: true }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label(context) {
+                                const value = context.parsed.y;
+                                if (value === null || Number.isNaN(value)) {
+                                    return `${context.dataset.label}: --`;
+                                }
+                                return `${context.dataset.label}: ${Math.round(value)} m`;
+                            }
+                        }
+                    },
+                    freezingElevation: {
+                        elevations: RESORT_ELEVATIONS,
+                        color: '#94a3b8',
+                        font: '12px "Inter", sans-serif'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        suggestedMax,
+                        title: {
+                            display: true,
+                            text: 'Elevation (m)'
+                        },
+                        ticks: {
+                            callback(value) {
+                                return `${value} m`;
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.18)'
+                        }
+                    }
+                }
+            };
+
+            if (freezingLevelChart) {
+                freezingLevelChart.data = chartData;
+                freezingLevelChart.options = chartOptions;
+                freezingLevelChart.update();
+            } else {
+                freezingLevelChart = new Chart(canvas.getContext('2d'), {
+                    type: 'line',
+                    data: chartData,
+                    options: chartOptions
+                });
+            }
+        }
+
+        function updateWindGustChart(data) {
+            const canvas = document.getElementById('wind-gust-chart');
+            const windowLabel = document.getElementById('wind-profile-window');
+            if (!canvas || !windowLabel || typeof Chart === 'undefined') {
+                return;
+            }
+
+            const hourly = data ? data.hourly : null;
+            const windowData = buildHourlyWindow(hourly, ['wind_speed_10m', 'wind_gusts_10m'], 24, data && data.current ? data.current.time : undefined);
+
+            if (!windowData) {
+                windowLabel.textContent = 'Wind data unavailable.';
+                if (windGustChart) {
+                    windGustChart.destroy();
+                    windGustChart = null;
+                }
+                return;
+            }
+
+            windowLabel.textContent = formatWindowLabel(windowData.start, windowData.end);
+
+            const windSpeeds = windowData.datasets['wind_speed_10m'];
+            const gustSpeeds = windowData.datasets['wind_gusts_10m'];
+            const numericValues = windSpeeds.concat(gustSpeeds).filter(val => Number.isFinite(val));
+            const maxVal = numericValues.length ? Math.max(...numericValues) : WIND_THRESHOLD_HOLD + 10;
+            const suggestedMax = Math.max(WIND_THRESHOLD_HOLD + 10, Math.ceil((maxVal + 5) / 10) * 10);
+
+            const chartData = {
+                labels: windowData.labels,
+                datasets: [
+                    {
+                        label: 'Wind Speed (km/h)',
+                        data: windSpeeds,
+                        borderColor: '#2563eb',
+                        borderWidth: 3,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        tension: 0.35,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Wind Gust (km/h)',
+                        data: gustSpeeds,
+                        borderColor: '#f97316',
+                        borderWidth: 3,
+                        borderDash: [6, 4],
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        tension: 0.35,
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: `Hold Threshold (${WIND_THRESHOLD_HOLD} km/h)`,
+                        data: new Array(windowData.labels.length).fill(WIND_THRESHOLD_HOLD),
+                        borderColor: '#dc2626',
+                        borderDash: [8, 6],
+                        pointRadius: 0,
+                        borderWidth: 2,
+                        yAxisID: 'y1'
+                    }
+                ]
+            };
+
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        labels: { usePointStyle: true }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label(context) {
+                                const value = context.parsed.y;
+                                if (value === null || Number.isNaN(value)) {
+                                    return `${context.dataset.label}: --`;
+                                }
+                                return `${context.dataset.label}: ${value.toFixed(0)} km/h`;
+                            }
+                        }
+                    },
+                    holdZone: {
+                        threshold: WIND_THRESHOLD_HOLD,
+                        fillColor: 'rgba(220, 38, 38, 0.12)',
+                        axis: 'y'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        suggestedMax,
+                        title: {
+                            display: true,
+                            text: 'Wind Speed (km/h)'
+                        },
+                        ticks: {
+                            callback(value) {
+                                return `${value} km/h`;
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.16)'
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        suggestedMax,
+                        ticks: {
+                            callback(value) {
+                                return `${value} km/h`;
+                            }
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            };
+
+            if (windGustChart) {
+                windGustChart.data = chartData;
+                windGustChart.options = chartOptions;
+                windGustChart.update();
+            } else {
+                windGustChart = new Chart(canvas.getContext('2d'), {
+                    type: 'line',
+                    data: chartData,
+                    options: chartOptions
+                });
+            }
+        }
+
+        function buildDailySeries(dataset, keys = []) {
+            if (!dataset || !dataset.daily || !Array.isArray(dataset.daily.time)) {
+                return [];
+            }
+            return dataset.daily.time.map((dateStr, index) => {
+                const entry = { date: dateStr };
+                keys.forEach(key => {
+                    const series = dataset.daily[key];
+                    if (series && Array.isArray(series)) {
+                        entry[key] = toNumber(series[index]);
+                    } else {
+                        entry[key] = null;
+                    }
+                });
+                return entry;
+            });
+        }
+
+        function updateChatPlanner(forecastData, historicalData) {
+            const previewEl = document.getElementById('chat-json-preview');
+            const statusEl = document.getElementById('chat-json-status');
+            if (!previewEl) {
+                return;
+            }
+
+            if (!forecastData) {
+                latestChatPayload = null;
+                previewEl.textContent = 'SnowLab JSON unavailable (no live data yet).';
+                if (statusEl) {
+                    statusEl.textContent = 'Refresh the page once data loads, then copy the JSON into ChatGPT.';
+                }
+                return;
+            }
+
+            const current = forecastData.current || {};
+            const daily = forecastData.daily || {};
+            const hourly = forecastData.hourly || {};
+
+            const hourlyWindow = buildHourlyWindow(
+                hourly,
+                ['temperature_2m', 'apparent_temperature', 'snowfall', 'precipitation_probability', 'wind_speed_10m', 'wind_gusts_10m', 'freezing_level_height'],
+                24,
+                current.time
+            );
+
+            const hourlyNext24 = hourlyWindow
+                ? hourlyWindow.timestamps.map((iso, idx) => ({
+                    time_iso: iso,
+                    temperature_c: toNumber(hourlyWindow.datasets['temperature_2m'][idx]),
+                    feels_like_c: toNumber(hourlyWindow.datasets['apparent_temperature'][idx]),
+                    snowfall_cm: toNumber(hourlyWindow.datasets['snowfall'][idx]),
+                    precipitation_probability_percent: toNumber(hourlyWindow.datasets['precipitation_probability'][idx], 0),
+                    wind_speed_kmh: toNumber(hourlyWindow.datasets['wind_speed_10m'][idx], 0),
+                    wind_gust_kmh: toNumber(hourlyWindow.datasets['wind_gusts_10m'][idx], 0),
+                    freezing_level_m: toNumber(hourlyWindow.datasets['freezing_level_height'][idx], 0)
+                }))
+                : [];
+
+            const dailyNext7 = Array.isArray(daily.time)
+                ? daily.time.map((dateStr, idx) => ({
+                    date: dateStr,
+                    weekday: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long' }),
+                    weather_code: daily.weather_code ? daily.weather_code[idx] : null,
+                    snowfall_cm: toNumber(daily.snowfall_sum ? daily.snowfall_sum[idx] : null),
+                    precipitation_mm: toNumber(daily.precipitation_sum ? daily.precipitation_sum[idx] : null),
+                    precipitation_probability_percent: toNumber(daily.precipitation_probability_max ? daily.precipitation_probability_max[idx] : null, 0),
+                    temp_max_c: toNumber(daily.temperature_2m_max ? daily.temperature_2m_max[idx] : null),
+                    temp_min_c: toNumber(daily.temperature_2m_min ? daily.temperature_2m_min[idx] : null),
+                    wind_speed_max_kmh: toNumber(daily.wind_speed_10m_max ? daily.wind_speed_10m_max[idx] : null, 0),
+                    wind_gust_max_kmh: toNumber(daily.wind_gusts_10m_max ? daily.wind_gusts_10m_max[idx] : null, 0)
+                }))
+                : [];
+
+            const historicalSnow = buildDailySeries(historicalData, ['snowfall_sum', 'precipitation_sum']);
+
+            const currentSnowDepthCm = current.snow_depth !== undefined && current.snow_depth !== null
+                ? toNumber(Number(current.snow_depth) * 100, 0)
+                : null;
+
+            const payload = {
+                meta: {
+                    generated_at_iso: new Date().toISOString(),
+                    source: 'SnowLab (Big White) powered by Open-Meteo',
+                    location: { resort: 'Big White', latitude: 49.73, longitude: -118.94, timezone: forecastData.timezone || TIME_ZONE },
+                    share_url: 'https://bw-report.netlify.app/'
+                },
+                current_conditions: {
+                    observed_at_iso: current.time || null,
+                    temperature_c: toNumber(current.temperature_2m),
+                    feels_like_c: toNumber(current.apparent_temperature),
+                    snowfall_today_cm: toNumber(daily.snowfall_sum ? daily.snowfall_sum[0] : null),
+                    snow_depth_cm: currentSnowDepthCm,
+                    wind_speed_kmh: toNumber(current.wind_speed_10m, 0),
+                    wind_gust_kmh: toNumber(current.wind_gusts_10m, 0),
+                    weather_code: current.weather_code ?? null
+                },
+                key_levels: {
+                    freezing_level_current_m: toNumber(
+                        hourly.freezing_level_height && Array.isArray(hourly.freezing_level_height) ? hourly.freezing_level_height[getHourIndex(hourly, current.time)] : null,
+                        0
+                    ),
+                    resort_elevations_m: RESORT_ELEVATIONS
+                },
+                hourly_next_24: hourlyNext24,
+                upcoming_days: dailyNext7,
+                historical_past_7_days: historicalSnow,
+                notes: [
+                    'Paste this JSON into ChatGPT and ask for ski-day or trip planning advice.',
+                    'Key arrays: hourly_next_24 (first 24 hours) and upcoming_days (7-day outlook).'
+                ]
+            };
+
+            latestChatPayload = JSON.stringify(payload, null, 2);
+            previewEl.textContent = latestChatPayload;
+            if (statusEl) {
+                statusEl.textContent = 'Ready! Copy the JSON, open ChatGPT, and paste it with your planning question.';
+            }
+        }
+
+        async function handleCopyChatJson() {
+            const statusEl = document.getElementById('chat-json-status');
+            if (!latestChatPayload) {
+                if (statusEl) {
+                    statusEl.textContent = 'SnowLab data is still loading—try again in a moment.';
+                }
+                return;
+            }
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(latestChatPayload);
+                } else {
+                    const tempTextArea = document.createElement('textarea');
+                    tempTextArea.value = latestChatPayload;
+                    tempTextArea.setAttribute('readonly', '');
+                    tempTextArea.style.position = 'absolute';
+                    tempTextArea.style.left = '-9999px';
+                    document.body.appendChild(tempTextArea);
+                    tempTextArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempTextArea);
+                }
+                if (statusEl) {
+                    statusEl.textContent = 'Copied! Paste the JSON into ChatGPT and ask for a ski plan.';
+                }
+            } catch (error) {
+                console.error('Failed to copy chat JSON:', error);
+                if (statusEl) {
+                    statusEl.textContent = 'Copy failed. Highlight the JSON above manually and copy it.';
+                }
+            }
+        }
+
+        function updateCurrentConditions(data, options = {}) {
+            const { current, daily, hourly } = data;
+            if (!current) {
+                return;
+            }
+
+            const { fromCache = false, stale = false } = options;
+            const lastUpdated = document.getElementById('last-updated');
+
+            if (current.time) {
+                const formattedTime = new Date(current.time).toLocaleTimeString('en-US', { timeStyle: 'short', hour12: true });
+                let label = `Last updated: ${formattedTime}`;
+                if (fromCache) {
+                    label += stale ? ' (cached snapshot, stale)' : ' (cached snapshot)';
+                }
+                lastUpdated.textContent = label;
+            } else if (fromCache) {
+                lastUpdated.textContent = 'Using cached snapshot.';
+            } else {
+                lastUpdated.textContent = 'Awaiting update...';
+            }
+
+            const weatherDetails = getWeatherDetails(current.weather_code);
+            document.getElementById('current-weather-icon').textContent = weatherDetails.icon;
+            document.getElementById('current-weather-summary').textContent = weatherDetails.label;
+
+            document.getElementById('current-temp').textContent = formatValue(current.temperature_2m, { suffix: '°' });
+            document.getElementById('feels-like').textContent = formatValue(current.apparent_temperature, { suffix: '°' });
+
+            const snowfallToday = daily && Array.isArray(daily.snowfall_sum) ? daily.snowfall_sum[0] : null;
+            document.getElementById('24h-snow').innerHTML = `${formatValue(snowfallToday)}<span class="text-2xl ml-1">cm</span>`;
+
+            const snowDepthMeters = Number(current.snow_depth);
+            const snowDepthCm = Number.isFinite(snowDepthMeters) ? snowDepthMeters * 100 : null;
+            document.getElementById('snow-base').innerHTML = `${formatValue(snowDepthCm)}<span class="text-2xl ml-1">cm</span>`;
+
+            document.getElementById('wind-speed').innerHTML = `${formatValue(current.wind_speed_10m)}<span class="text-2xl ml-1">km/h</span>`;
+            document.getElementById('wind-gust').innerHTML = `${formatValue(current.wind_gusts_10m)}<span class="text-2xl ml-1">km/h</span>`;
+
+            const hourIndex = getHourIndex(hourly, current.time);
+            const precipNow = hourly && Array.isArray(hourly.precipitation_probability) ? hourly.precipitation_probability[hourIndex] : null;
+            document.getElementById('precip-prob-now').innerHTML = `${formatValue(precipNow)}<span class="text-2xl ml-1">%</span>`;
+        }
+
+        function updateHourlyForecast(data) {
+            const { hourly } = data;
+            if (!hourly) return;
+
+            const container = document.getElementById('hourly-container');
+            container.innerHTML = '';
+
+            const startIndex = getHourIndex(hourly);
+            const endIndex = Math.min(startIndex + 24, hourly.time.length);
+
+            for (let i = startIndex; i < endIndex; i++) {
+                const time = new Date(hourly.time[i]);
+                const weatherDetails = getWeatherDetails(hourly.weather_code[i]);
+                const card = document.createElement('div');
+                card.className = 'flex-none w-28 text-center bg-gray-50 p-3 rounded-lg shadow-sm';
+
+                const hourString = time.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }).replace(' ', '');
+
+                const snowfall = hourly.snowfall[i];
+                const snowfallText = Number.isFinite(snowfall) && snowfall > 0 ? `${snowfall.toFixed(1)} cm` : '--';
+                const precipProbability = hourly.precipitation_probability[i];
+                const precipProbabilityText = formatValue(precipProbability, { suffix: '%', fallback: '--' });
+
+                const freezingLevel = hourly.freezing_level_height && hourly.freezing_level_height[i];
+                const freezingLevelText = formatValue(freezingLevel, { suffix: ' m', fallback: '--' });
+
+                const apparent = hourly.apparent_temperature && hourly.apparent_temperature[i];
+                const feelsLikeText = formatValue(apparent, { suffix: '°' });
+
+                card.innerHTML = `
+                    <div class="text-2xl mb-2">${weatherDetails.icon}</div>
+                    <div class="font-semibold text-sm">${hourString}</div>
+                    <div class="font-bold text-xl my-1">${formatValue(hourly.temperature_2m[i], { suffix: '°' })}</div>
+                    <div class="text-xs text-gray-500">Feels ${feelsLikeText}</div>
+                    <div class="text-xs text-blue-600 font-medium mt-1">Snow: ${snowfallText}</div>
+                    <div class="text-xs text-blue-600 font-medium">Precip: ${precipProbabilityText}</div>
+                    <div class="text-xs text-gray-500 mt-1">FL: ${freezingLevelText}</div>
+                `;
+
+                container.appendChild(card);
+            }
+        }
+
+        function updateMountainInsights(data) {
+            const { hourly, current } = data;
+            if (!hourly) return;
+
+            const hourIndex = getHourIndex(hourly, current ? current.time : undefined);
+
+            const visibility = hourly.visibility ? hourly.visibility[hourIndex] : null;
+            document.getElementById('visibility-now').textContent = formatKm(visibility);
+
+            const cloudCover = hourly.cloud_cover ? hourly.cloud_cover[hourIndex] : null;
+            document.getElementById('cloud-cover-now').textContent = formatValue(cloudCover, { suffix: '%', fallback: '--' });
+
+            const freezingLevel = hourly.freezing_level_height ? hourly.freezing_level_height[hourIndex] : null;
+            document.getElementById('freezing-level-now').textContent = formatValue(freezingLevel, { suffix: ' m', fallback: '--' });
+
+            const liquidPrecip = hourly.precipitation ? hourly.precipitation[hourIndex] : null;
+            document.getElementById('liquid-precip-now').textContent = Number.isFinite(liquidPrecip)
+                ? `${liquidPrecip.toFixed(1)} mm`
+                : '-- mm';
+        }
+
+        function updateSunlight(data) {
+            const { daily } = data;
+            if (!daily || !daily.sunrise) return;
+
+            const sunrise = daily.sunrise[0];
+            const sunset = daily.sunset[0];
+            const daylight = daily.daylight_duration ? daily.daylight_duration[0] : null;
+
+            document.getElementById('sunrise-time').textContent = sunrise ? new Date(sunrise).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '--:--';
+            document.getElementById('sunset-time').textContent = sunset ? new Date(sunset).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '--:--';
+            document.getElementById('daylight-duration').textContent = formatDuration(daylight);
+        }
+
+        function updateHistoricalComparison(forecastData, historicalData) {
+            const snowTodayEl = document.getElementById('compare-snow-today');
+            const snowYesterdayEl = document.getElementById('compare-snow-yesterday');
+            const snowDeltaEl = document.getElementById('compare-snow-delta');
+            const tempTodayEl = document.getElementById('compare-temp-today');
+            const tempYesterdayEl = document.getElementById('compare-temp-yesterday');
+            const tempDeltaEl = document.getElementById('compare-temp-delta');
+            const gustTodayEl = document.getElementById('compare-gust-today');
+            const gustYesterdayEl = document.getElementById('compare-gust-yesterday');
+            const gustDeltaEl = document.getElementById('compare-gust-delta');
+
+            if (!forecastData || !forecastData.daily || !historicalData || !historicalData.daily) {
+                snowTodayEl.textContent = '--';
+                snowYesterdayEl.textContent = '--';
+                snowDeltaEl.textContent = 'Historical data unavailable.';
+                applyDeltaStyles(snowDeltaEl, null);
+
+                tempTodayEl.textContent = '--';
+                tempYesterdayEl.textContent = '--';
+                tempDeltaEl.textContent = 'Historical data unavailable.';
+                applyDeltaStyles(tempDeltaEl, null);
+
+                gustTodayEl.textContent = '--';
+                gustYesterdayEl.textContent = '--';
+                gustDeltaEl.textContent = 'Historical data unavailable.';
+                applyDeltaStyles(gustDeltaEl, null);
+                return;
+            }
+
+            const todaySnow = getDailyValue(forecastData, 'snowfall_sum');
+            const yesterdaySnow = getDailyValue(historicalData, 'snowfall_sum', -1);
+            const todayHigh = getDailyValue(forecastData, 'temperature_2m_max');
+            const yesterdayHigh = getDailyValue(historicalData, 'temperature_2m_max', -1);
+            const todayGust = getDailyValue(forecastData, 'wind_gusts_10m_max');
+            const yesterdayGust = getDailyValue(historicalData, 'wind_gusts_10m_max', -1);
+
+            const snowComparison = buildComparison(todaySnow, yesterdaySnow, { suffix: ' cm' });
+            snowTodayEl.textContent = snowComparison.todayText;
+            snowYesterdayEl.textContent = snowComparison.yesterdayText;
+            if (snowComparison.deltaText !== '--') {
+                snowDeltaEl.textContent = `${snowComparison.deltaText} vs yesterday`;
+            } else {
+                snowDeltaEl.textContent = 'No comparable snow data.';
+            }
+            applyDeltaStyles(snowDeltaEl, snowComparison.deltaValue);
+
+            const tempComparison = buildComparison(todayHigh, yesterdayHigh, { suffix: '°' });
+            tempTodayEl.textContent = tempComparison.todayText;
+            tempYesterdayEl.textContent = tempComparison.yesterdayText;
+            if (tempComparison.deltaText !== '--') {
+                tempDeltaEl.textContent = `${tempComparison.deltaText} vs yesterday`;
+            } else {
+                tempDeltaEl.textContent = 'No comparable temperature data.';
+            }
+            applyDeltaStyles(tempDeltaEl, tempComparison.deltaValue);
+
+            const gustComparison = buildComparison(todayGust, yesterdayGust, { suffix: ' km/h' });
+            gustTodayEl.textContent = gustComparison.todayText;
+            gustYesterdayEl.textContent = gustComparison.yesterdayText;
+            if (gustComparison.deltaText !== '--') {
+                gustDeltaEl.textContent = `${gustComparison.deltaText} vs yesterday`;
+            } else {
+                gustDeltaEl.textContent = 'No comparable wind data.';
+            }
+            applyDeltaStyles(gustDeltaEl, gustComparison.deltaValue);
+        }
+
+        function update7DayForecast(data) {
+            const { daily } = data;
+            if (!daily) return;
+
+            const container = document.getElementById('7-day-container');
+            container.innerHTML = '';
+
+            for (let i = 0; i < daily.time.length; i++) {
+                const day = new Date(daily.time[i]);
+                let dayName = day.toLocaleDateString('en-US', { weekday: 'long' });
+                if (i === 0) dayName = 'Today';
+                if (i === 1) dayName = 'Tomorrow';
+
+                const weatherDetails = getWeatherDetails(daily.weather_code ? daily.weather_code[i] : undefined);
+                const snowfall = daily.snowfall_sum ? daily.snowfall_sum[i] : null;
+                const precipitation = daily.precipitation_sum ? daily.precipitation_sum[i] : null;
+                const precipProb = daily.precipitation_probability_max ? daily.precipitation_probability_max[i] : null;
+                const windGust = daily.wind_gusts_10m_max ? daily.wind_gusts_10m_max[i] : null;
+
+                const item = document.createElement('div');
+                item.className = 'bg-gray-50 rounded-lg p-4';
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="text-3xl">${weatherDetails.icon}</div>
+                        <div class="flex-1">
+                            <p class="font-semibold text-gray-800">${dayName}</p>
+                            <p class="text-sm text-gray-500">${weatherDetails.label}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-blue-700 font-semibold">${formatValue(snowfall, { suffix: ' cm', fallback: '--' })}</p>
+                            <p class="text-xs text-gray-500">Precip: ${formatValue(precipProb, { suffix: '%', fallback: '--' })}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between text-sm text-gray-600">
+                        <span>High ${formatValue(daily.temperature_2m_max ? daily.temperature_2m_max[i] : null, { suffix: '°' })} / Low ${formatValue(daily.temperature_2m_min ? daily.temperature_2m_min[i] : null, { suffix: '°' })}</span>
+                        <span>Liquid: ${formatValue(precipitation, { suffix: ' mm', fallback: '--', decimals: 1 })}</span>
+                    </div>
+                    <div class="mt-2 text-sm text-gray-600">
+                        Gusts up to ${formatValue(windGust, { suffix: ' km/h', fallback: '--' })}, winds peak at ${formatValue(daily.wind_speed_10m_max ? daily.wind_speed_10m_max[i] : null, { suffix: ' km/h', fallback: '--' })}.
+                    </div>
+                `;
+
+                container.appendChild(item);
+            }
+        }
+    </script>
+</body>
+</html>
