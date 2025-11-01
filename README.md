@@ -2,6 +2,7 @@
 
 I’ve always loved the mix of engineering and mountain stoke. This season, I set out to create the ultimate Big White snow dashboard—live conditions, slick charts, share-ready images, even a ChatGPT trip planner. The whole thing turned into a vibe-coded, zero-dependency HTML page you can drop on Netlify or any static host. Here’s the complete recipe so you can remix it for your home mountain.
 
+→ **Live Demo:** https://bw-report.netlify.app/  
 → **Repo:** https://github.com/jessekorzan/snowlab
 
 ---
