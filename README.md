@@ -98,6 +98,8 @@ We rely on Open-Meteo (no API key). Build a single URL that requests:
 - `timezone=America/Vancouver` (adjust per resort).
 - `windspeed_unit=kmh`, `precipitation_unit=mm`.
 
+> 🔁 **Swap resorts fast:** Update the `APP_CONFIG` object near the top of `index.html` with your latitude, longitude, timezone, resort name, and share URL. Be sure to sync the `<head>` metadata (title, description, JSON-LD, canonical link) so it reflects your mountain.
+
 Add a simple retry helper with exponential backoff.
 
 ---
@@ -238,3 +240,9 @@ Grab the repo at **https://github.com/jessekorzan/snowlab**, clone the structure
 4. Share it with your mountain family.
 
 If you do spin up your own, tag me—I’d love to see what you surface for your hill. Happy coding, and even happier pow hunting!
+
+---
+
+## License
+
+Released under the [MIT License](LICENSE).

@@ -467,10 +467,17 @@ Awaiting live data...
             99: { icon: '⛈️', label: 'Severe thunderstorm' }
         };
 
+        const APP_CONFIG = {
+            resortName: 'Big White',
+            latitude: 49.73,
+            longitude: -118.94,
+            timezone: 'America/Vancouver',
+            shareUrl: 'https://bw-report.netlify.app/'
+        };
+
         const FALLBACK = '--';
         const CACHE_KEY = 'bigwhite-weather-cache-v2';
         const CACHE_TTL_MS = 10 * 60 * 1000;
-        const TIME_ZONE = 'America/Vancouver';
         const HISTORICAL_LOOKBACK_DAYS = 7;
         const RESORT_ELEVATIONS = [
             { label: 'Village', value: 1710 },
@@ -478,7 +485,7 @@ Awaiting live data...
             { label: 'Summit', value: 2319 }
         ];
         const WIND_THRESHOLD_HOLD = 70; // km/h
-        const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast?latitude=49.73&longitude=-118.94&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,snowfall,snow_depth&hourly=temperature_2m,apparent_temperature,snowfall,snow_depth,precipitation,precipitation_probability,weather_code,visibility,cloud_cover,wind_speed_10m,wind_gusts_10m,freezing_level_height&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,sunrise,sunset,daylight_duration&timezone=America%2FVancouver&forecast_days=7&windspeed_unit=kmh&precipitation_unit=mm';
+        const FORECAST_URL = `https://api.open-meteo.com/v1/forecast?latitude=${APP_CONFIG.latitude}&longitude=${APP_CONFIG.longitude}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,snowfall,snow_depth&hourly=temperature_2m,apparent_temperature,snowfall,snow_depth,precipitation,precipitation_probability,weather_code,visibility,cloud_cover,wind_speed_10m,wind_gusts_10m,freezing_level_height&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,sunrise,sunset,daylight_duration&timezone=${encodeURIComponent(APP_CONFIG.timezone)}&forecast_days=7&windspeed_unit=kmh&precipitation_unit=mm`;
         let snowTrendChart = null;
         let temperatureProfileChart = null;
         let freezingLevelChart = null;
@@ -631,12 +638,12 @@ Awaiting live data...
         function buildHistoricalUrl() {
             const startDate = getDateString(-HISTORICAL_LOOKBACK_DAYS);
             const endDate = getDateString(-1);
-            return `https://archive-api.open-meteo.com/v1/archive?latitude=49.73&longitude=-118.94&start_date=${startDate}&end_date=${endDate}&daily=temperature_2m_max,temperature_2m_min,snowfall_sum,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max&timezone=America%2FVancouver&windspeed_unit=kmh&precipitation_unit=mm`;
+            return `https://archive-api.open-meteo.com/v1/archive?latitude=${APP_CONFIG.latitude}&longitude=${APP_CONFIG.longitude}&start_date=${startDate}&end_date=${endDate}&daily=temperature_2m_max,temperature_2m_min,snowfall_sum,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max&timezone=${encodeURIComponent(APP_CONFIG.timezone)}&windspeed_unit=kmh&precipitation_unit=mm`;
         }
 
         function getDateString(offsetDays = 0) {
             const now = new Date();
-            const tzNow = new Date(now.toLocaleString('en-US', { timeZone: TIME_ZONE }));
+            const tzNow = new Date(now.toLocaleString('en-US', { timeZone: APP_CONFIG.timezone }));
             tzNow.setDate(tzNow.getDate() + offsetDays);
             const year = tzNow.getFullYear();
             const month = String(tzNow.getMonth() + 1).padStart(2, '0');
@@ -1535,9 +1542,14 @@ Awaiting live data...
             const payload = {
                 meta: {
                     generated_at_iso: new Date().toISOString(),
-                    source: 'SnowLab (Big White) powered by Open-Meteo',
-                    location: { resort: 'Big White', latitude: 49.73, longitude: -118.94, timezone: forecastData.timezone || TIME_ZONE },
-                    share_url: 'https://bw-report.netlify.app/'
+                    source: `SnowLab (${APP_CONFIG.resortName}) powered by Open-Meteo`,
+                    location: {
+                        resort: APP_CONFIG.resortName,
+                        latitude: APP_CONFIG.latitude,
+                        longitude: APP_CONFIG.longitude,
+                        timezone: forecastData.timezone || APP_CONFIG.timezone
+                    },
+                    share_url: APP_CONFIG.shareUrl
                 },
                 current_conditions: {
                     observed_at_iso: current.time || null,
